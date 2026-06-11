@@ -1,0 +1,8 @@
+.VS/
+.vscode/
+backend/node_modules/
+backend/.env
+backend/database.sqlite
+node_modules/
+.DS_Store
+Thumbs.db

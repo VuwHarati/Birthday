@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>لیست کادوهای تولدم</title>
+    <meta name="description" content="لیست کادوهای تولد با امکان رزرو هدیه" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&display=swap"
+          rel="stylesheet" />
+
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div class="page-bg"></div>
+
+    <header class="hero">
+        <div class="hero-overlay"></div>
+
+        <div class="container hero-content">
+            <span class="hero-badge">Birthday Gift List</span>
+
+            <h1 class="hero-title">لیست کادوهای تولدم</h1>
+
+            <p class="hero-text">
+                اینجا می‌تونی هدیه‌های مدنظر من رو ببینی و اگر دوست داشتی یکی از اون‌ها رو
+                رزرو کنی. اگر یک هدیه رزرو شده باشه، برای بقیه هم به همون صورت نمایش داده می‌شه.
+            </p>
+
+            <div class="hero-search">
+                <label class="sr-only" for="search-input">جستجو در هدایا</label>
+                <input id="search-input"
+                       type="text"
+                       placeholder="جستجو در هدایا"
+                       autocomplete="off" />
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <section class="container">
+            <div class="section-heading">
+                <div>
+                    <p class="section-subtitle">لیست هدایا</p>
+                    <h2 class="section-title">انتخاب هدیه</h2>
+                </div>
+
+                <p class="section-note">
+                    روی هر کارت می‌تونی عکس‌ها رو ورق بزنی و در صورت آزاد بودن، هدیه رو رزرو کنی.
+                </p>
+            </div>
+
+            <div id="items-container" class="gifts-grid">
+                <div class="loading-state">
+                    <div class="loader"></div>
+                    <p>در حال بارگذاری هدایا...</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-content">
+            <p>Designed With Love -Reihaneh✨</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
