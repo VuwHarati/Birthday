@@ -6,3 +6,8 @@ backend/database.sqlite
 node_modules/
 .DS_Store
 Thumbs.db
+.vs/
+node_modules/
+.wrangler/
+.env
+.DS_Store
