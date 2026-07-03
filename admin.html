@@ -1,0 +1,94 @@
+﻿<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>مدیریت هدایا</title>
+    <meta name="robots" content="noindex" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&display=swap"
+          rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div class="page-bg"></div>
+
+    <header class="hero">
+        <div class="hero-overlay"></div>
+        <div class="container hero-content">
+            <span class="hero-badge">Admin Panel</span>
+            <h1 class="hero-title">مدیریت هدیه‌ها</h1>
+            <p class="hero-text">
+                از این صفحه می‌تونی هدیه جدید اضافه کنی، موارد قبلی رو ویرایش کنی یا حذف کنی.
+            </p>
+
+            <div class="admin-auth">
+                <label class="sr-only" for="admin-token">توکن ادمین</label>
+                <input id="admin-token" type="password" placeholder="توکن ادمین" />
+                <button id="save-token-btn" type="button" class="admin-primary-btn">
+                    ذخیره توکن
+                </button>
+                <button id="logout-btn" type="button" class="admin-secondary-btn">
+                    پاک کردن توکن
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <section class="container admin-layout">
+            <section class="admin-panel">
+                <div class="section-heading">
+                    <div>
+                        <p class="section-subtitle">فرم مدیریت</p>
+                        <h2 class="section-title">افزودن یا ویرایش هدیه</h2>
+                    </div>
+                </div>
+
+                <form id="item-form" class="admin-form">
+                    <input id="item-id" type="hidden" />
+
+                    <label class="admin-label" for="item-title">عنوان</label>
+                    <input id="item-title" class="admin-input" type="text" required />
+
+                    <label class="admin-label" for="item-slug">اسلاگ</label>
+                    <input id="item-slug" class="admin-input" type="text" />
+
+                    <label class="admin-label" for="item-description">توضیحات</label>
+                    <textarea id="item-description" class="admin-textarea" rows="4"></textarea>
+
+                    <label class="admin-label" for="item-images">عکس‌ها</label>
+                    <textarea id="item-images"
+                              class="admin-textarea"
+                              rows="5"
+                              placeholder="هر لینک عکس را در یک خط وارد کن"></textarea>
+
+                    <div class="admin-form-actions">
+                        <button id="submit-btn" type="submit" class="admin-primary-btn">
+                            ذخیره هدیه
+                        </button>
+                        <button id="cancel-edit-btn" type="button" class="admin-secondary-btn">
+                            لغو ویرایش
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="admin-panel">
+                <div class="section-heading">
+                    <div>
+                        <p class="section-subtitle">لیست فعلی</p>
+                        <h2 class="section-title">هدیه‌ها</h2>
+                    </div>
+                </div>
+
+                <div id="admin-status" class="admin-status">در حال بارگذاری...</div>
+                <div id="admin-items" class="admin-items-list"></div>
+            </section>
+        </section>
+    </main>
+
+    <script src="admin.js"></script>
+</body>
+</html>

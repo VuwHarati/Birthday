@@ -553,3 +553,123 @@ a {
         font-size: 1.05rem;
     }
 }
+.admin-layout {
+    display: grid;
+    gap: 22px;
+}
+
+.admin-panel {
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.76);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow);
+    padding: 18px;
+}
+
+.admin-auth,
+.admin-form-actions,
+.admin-item-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.admin-form {
+    display: grid;
+    gap: 10px;
+}
+
+.admin-label {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.admin-input,
+.admin-textarea {
+    width: 100%;
+    border-radius: 16px;
+    border: 1px solid var(--border-soft);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 12px 14px;
+    color: var(--text-main);
+}
+
+.admin-textarea {
+    resize: vertical;
+    min-height: 110px;
+}
+
+.admin-primary-btn,
+.admin-secondary-btn,
+.admin-danger-btn {
+    min-height: 46px;
+    padding: 11px 16px;
+    border-radius: 14px;
+    font-weight: 800;
+    transition: var(--transition);
+}
+
+.admin-primary-btn {
+    background: linear-gradient(135deg, var(--rose-gold), var(--gold));
+    color: var(--white);
+}
+
+.admin-secondary-btn {
+    background: rgba(201, 201, 207, 0.28);
+    color: var(--text-main);
+}
+
+.admin-danger-btn {
+    background: rgba(159, 91, 102, 0.14);
+    color: var(--danger-text);
+}
+
+.admin-status {
+    margin-bottom: 14px;
+    color: var(--text-soft);
+}
+
+.admin-items-list {
+    display: grid;
+    gap: 14px;
+}
+
+.admin-item-card {
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.86);
+    padding: 16px;
+}
+
+.admin-item-head {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.admin-item-title {
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+.admin-item-description,
+.admin-item-meta {
+    margin: 0 0 10px;
+    color: var(--text-soft);
+    line-height: 1.9;
+}
+
+@media (min-width: 960px) {
+    .admin-layout {
+        grid-template-columns: 380px minmax(0, 1fr);
+        align-items: start;
+    }
+
+    .admin-panel {
+        padding: 22px;
+    }
+}

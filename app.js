@@ -23,12 +23,20 @@ function escapeHtml(value) {
 
 // خواندن لیست هدایا از فایل استاتیک
 async function fetchItems() {
-    const response = await fetch("items.json");
-    if (!response.ok) {
-        throw new Error("خطا در خواندن لیست هدایا (items.json)");
+    const apiResponse = await fetch(`${API_BASE}/items`);
+
+    if (apiResponse.ok) {
+        return apiResponse.json();
     }
-    return response.json();
+
+    const staticResponse = await fetch("items.json");
+    if (!staticResponse.ok) {
+        throw new Error("خطا در خواندن لیست هدایا");
+    }
+
+    return staticResponse.json();
 }
+
 
 // خواندن وضعیت رزروها از API
 async function fetchReservations() {
