@@ -203,7 +203,7 @@ function filterItems() {
 
 async function refreshItems() {
     allItems = await fetchItems();
-
+   
     try {
         reservationsMap = await fetchReservations();
     } catch (error) {

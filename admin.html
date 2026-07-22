@@ -11,34 +11,43 @@
           rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body class="admin-page">
     <div class="page-bg"></div>
 
-    <header class="hero">
+    <header class="hero admin-hero">
         <div class="hero-overlay"></div>
         <div class="container hero-content">
             <span class="hero-badge">Admin Panel</span>
             <h1 class="hero-title">مدیریت هدیه‌ها</h1>
             <p class="hero-text">
-                از این صفحه می‌تونی هدیه جدید اضافه کنی، موارد قبلی رو ویرایش کنی یا حذف کنی.
+                مدیریت لیست هدایا، ویرایش، حذف و بررسی وضعیت رزروها
             </p>
 
-            <div class="admin-auth">
-                <label class="sr-only" for="admin-token">توکن ادمین</label>
-                <input id="admin-token" type="password" placeholder="توکن ادمین" />
-                <button id="save-token-btn" type="button" class="admin-primary-btn">
-                    ذخیره توکن
-                </button>
-                <button id="logout-btn" type="button" class="admin-secondary-btn">
-                    پاک کردن توکن
-                </button>
-            </div>
+            <section class="admin-auth-shell">
+                <div class="admin-auth-card">
+                    <div class="admin-auth-copy">
+                        <p class="section-subtitle">دسترسی مدیریت</p>
+                        <h2 class="section-title admin-auth-title">احراز هویت ادمین</h2>
+                    </div>
+
+                    <div class="admin-auth-row">
+                        <label class="sr-only" for="admin-token">توکن ادمین</label>
+                        <input id="admin-token" class="admin-input admin-token-input" type="password" placeholder="توکن ادمین" />
+                        <button id="save-token-btn" type="button" class="admin-btn admin-btn-success">
+                            تایید توکن
+                        </button>
+                        <button id="logout-btn" type="button" class="admin-btn admin-btn-muted">
+                            خروج
+                        </button>
+                    </div>
+                </div>
+            </section>
         </div>
     </header>
 
     <main class="main-content">
         <section class="container admin-layout">
-            <section class="admin-panel">
+            <section id="admin-form-panel" class="admin-panel admin-panel-form is-locked" hidden>
                 <div class="section-heading">
                     <div>
                         <p class="section-subtitle">فرم مدیریت</p>
@@ -58,24 +67,32 @@
                     <label class="admin-label" for="item-description">توضیحات</label>
                     <textarea id="item-description" class="admin-textarea" rows="4"></textarea>
 
-                    <label class="admin-label" for="item-images">عکس‌ها</label>
-                    <textarea id="item-images"
-                              class="admin-textarea"
-                              rows="5"
-                              placeholder="هر لینک عکس را در یک خط وارد کن"></textarea>
+                    <label class="admin-label">آپلود عکس (Cloudinary)</label>
+                    <div class="image-upload-section">
+                        <input type="file" id="image-upload-input" accept="image/*" class="admin-input" />
+                        <button type="button" id="upload-image-btn" class="admin-btn admin-btn-muted">
+                            آپلود عکس
+                        </button>
+                        <div id="upload-status" style="margin-top: 8px; font-size: 0.9rem;"></div>
+                        <div id="image-preview" style="margin-top: 10px;"></div>
+                    </div>
+
+                    <label class="admin-label" for="item-images">لینک عکس‌ها (هر لینک در یک خط)</label>
+                        <textarea id="item-images" class="admin-textarea" rows="3"></textarea>
+
 
                     <div class="admin-form-actions">
-                        <button id="submit-btn" type="submit" class="admin-primary-btn">
+                        <button id="submit-btn" type="submit" class="admin-btn admin-btn-success admin-btn-wide">
                             ذخیره هدیه
                         </button>
-                        <button id="cancel-edit-btn" type="button" class="admin-secondary-btn">
-                            لغو ویرایش
+                        <button id="cancel-edit-btn" type="button" class="admin-btn admin-btn-muted">
+                            برگشت
                         </button>
                     </div>
                 </form>
             </section>
 
-            <section class="admin-panel">
+            <section class="admin-panel admin-panel-list">
                 <div class="section-heading">
                     <div>
                         <p class="section-subtitle">لیست فعلی</p>
@@ -83,11 +100,15 @@
                     </div>
                 </div>
 
-                <div id="admin-status" class="admin-status">در حال بارگذاری...</div>
+                <div id="admin-status" class="admin-status">توکن ادمین وارد نشده است.</div>
                 <div id="admin-items" class="admin-items-list"></div>
             </section>
         </section>
     </main>
+
+    <div id="admin-toast" class="admin-toast" hidden>
+        <div id="admin-toast-content" class="admin-toast-content"></div>
+    </div>
 
     <script src="admin.js"></script>
 </body>
