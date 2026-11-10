@@ -24,14 +24,70 @@ function buildError(message, status = 400) {
     return Response.json({ error: message }, { status });
 }
 
+const MAX_REQUEST_BYTES = 64 * 1024;
+const MAX_IMAGES = 8;
+const MAX_LINKS = 5;
+
+class RequestError extends Error {
+    constructor(message, status = 400) { super(message); this.status = status; }
+}
+
+async function readJson(request, maxBytes = MAX_REQUEST_BYTES) {
+    const length = Number(request.headers.get("content-length") || 0);
+    if (length > maxBytes) throw new RequestError("حجم درخواست بیش از حد مجاز است.", 413);
+    const text = await request.text();
+    if (new TextEncoder().encode(text).byteLength > maxBytes) throw new RequestError("حجم درخواست بیش از حد مجاز است.", 413);
+    let body;
+    try { body = JSON.parse(text); } catch { throw new RequestError("بدنه درخواست JSON معتبر نیست."); }
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new RequestError("ساختار درخواست معتبر نیست.");
+    return body;
+}
+
 function normalizeImages(images) {
+    if (typeof images === "string") {
+        const value = images.trim();
+        if (value.startsWith("[")) {
+            try { images = JSON.parse(value); } catch { /* accept newline separated links */ }
+        }
+    }
     if (Array.isArray(images)) {
-        return images.map((value) => String(value || "").trim()).filter(Boolean);
+        images = images.map((value) => String(value || "").trim()).filter(Boolean);
+        if (images.length > MAX_IMAGES) throw new RequestError(`حداکثر ${MAX_IMAGES} تصویر برای هر هدیه مجاز است.`);
+        return images.map((value) => {
+            if (value.length > 2048) throw new RequestError("لینک تصویر بیش از حد طولانی است.");
+            if (/^Images\/[a-zA-Z0-9._-]+\.(jpg|jpeg|png|webp|gif)$/i.test(value)) return value;
+            let url;
+            try { url = new URL(value); } catch { throw new RequestError("لینک تصویر معتبر نیست."); }
+            if (url.protocol !== "https:" || url.hostname !== "res.cloudinary.com") {
+                throw new RequestError("تصویر فقط می‌تواند از مسیر محلی پروژه یا Cloudinary باشد.");
+            }
+            return url.toString();
+        });
     }
     if (typeof images === "string") {
-        return images.split("\n").map((value) => value.trim()).filter(Boolean);
+        return normalizeImages(images.split("\n").map((value) => value.trim()).filter(Boolean));
     }
     return [];
+}
+
+function normalizeLinks(value) {
+    const links = Array.isArray(value) ? value : String(value || "").split(/\r?\n/);
+    const result = links.map((link) => String(link || "").trim()).filter(Boolean);
+    if (result.length > MAX_LINKS) throw new RequestError(`حداکثر ${MAX_LINKS} لینک فروشگاه مجاز است.`);
+    return result.map((link) => {
+        if (link.length > 2048) throw new RequestError("لینک فروشگاه بیش از حد طولانی است.");
+        let url;
+        try { url = new URL(link); } catch { throw new RequestError("یکی از لینک‌های فروشگاه معتبر نیست."); }
+        if (url.protocol !== "https:") throw new RequestError("لینک فروشگاه باید با HTTPS باشد.");
+        return url.toString();
+    });
+}
+
+function boundedText(value, field, limit) {
+    if (value != null && typeof value !== "string") throw new RequestError(`${field} باید متن باشد.`);
+    const text = String(value || "").trim();
+    if (text.length > limit) throw new RequestError(`${field} نباید بیشتر از ${limit} نویسه باشد.`);
+    return text;
 }
 
 function normalizeSlug(value, fallbackId) {
@@ -107,20 +163,28 @@ async function saveItems(store, items) {
 }
 
 function validateItemInput(body, existingId = null) {
-    const title = String(body.title || "").trim();
-    const description = String(body.description || "").trim();
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new RequestError("اطلاعات هدیه معتبر نیست.");
+    const title = boundedText(body.title, "عنوان", 120);
+    const description = boundedText(body.description, "توضیحات", 2000);
+    const slug = boundedText(body.slug, "اسلاگ", 120);
     const images = normalizeImages(body.images);
+    const priceRange = boundedText(body.priceRange, "بازه قیمت", 100);
+    const category = boundedText(body.category, "دسته‌بندی/اولویت", 60);
+    const storeLinks = normalizeLinks(body.storeLinks);
 
-    if (!title) throw new Error("title is required");
+    if (!title) throw new RequestError("عنوان هدیه را وارد کنید.");
 
     const id = existingId ?? Number(body.id || 0);
 
     return {
         id,
-        slug: normalizeSlug(body.slug, id || "new"),
+        slug: normalizeSlug(slug, id || "new"),
         title,
         description,
         images,
+        priceRange,
+        category,
+        storeLinks,
     };
 }
 
@@ -164,7 +228,7 @@ export async function onRequest(context) {
     // ==================== POST ====================
     if (method === "POST") {
         try {
-            const body = await context.request.json();
+            const body = await readJson(context.request);
             const store = getItemsStore(context);
             const items = await loadItems(context, store);
 
@@ -175,17 +239,17 @@ export async function onRequest(context) {
 
             return Response.json({ success: true, item, items: updatedItems });
         } catch (error) {
-            return buildError(error.message || "Invalid request", 400);
+            return buildError(error.message || "ذخیره هدیه ممکن نشد.", error.status || 500);
         }
     }
 
     // ==================== PUT ====================
     if (method === "PUT") {
         try {
-            const body = await context.request.json();
+            const body = await readJson(context.request);
             const itemId = Number(body.id || 0);
 
-            if (!itemId) return buildError("id is required");
+            if (!Number.isSafeInteger(itemId) || itemId < 1) return buildError("شناسه هدیه معتبر نیست.");
 
             const store = getItemsStore(context);
             const items = await loadItems(context, store);
@@ -201,17 +265,17 @@ export async function onRequest(context) {
 
             return Response.json({ success: true, item, items: updatedItems });
         } catch (error) {
-            return buildError(error.message || "Invalid request", 400);
+            return buildError(error.message || "ویرایش هدیه ممکن نشد.", error.status || 500);
         }
     }
 
     // ==================== DELETE ====================
     if (method === "DELETE") {
         try {
-            const body = await context.request.json();
+            const body = await readJson(context.request);
             const itemId = Number(body.id || 0);
 
-            if (!itemId) return buildError("id is required");
+            if (!Number.isSafeInteger(itemId) || itemId < 1) return buildError("شناسه هدیه معتبر نیست.");
 
             const store = getItemsStore(context);
             const items = await loadItems(context, store);
@@ -221,9 +285,16 @@ export async function onRequest(context) {
                 return buildError("Item not found", 404);
             }
 
+            const reservationsStore = getReservationsStore(context);
+            if (reservationsStore) {
+                const reservations = (await reservationsStore.get("items", "json")) || {};
+                if (reservations[String(itemId)]?.reserved) {
+                    return buildError("ابتدا رزرو این هدیه را آزاد کنید؛ هدیه رزروشده قابل حذف نیست.", 409);
+                }
+            }
+
             await saveItems(store, filteredItems);
 
-            const reservationsStore = getReservationsStore(context);
             if (reservationsStore) {
                 const reservations = (await reservationsStore.get("items", "json")) || {};
                 delete reservations[String(itemId)];
@@ -232,7 +303,7 @@ export async function onRequest(context) {
 
             return Response.json({ success: true, items: filteredItems });
         } catch (error) {
-            return buildError(error.message || "Invalid request", 400);
+            return buildError(error.message || "حذف هدیه ممکن نشد.", error.status || 500);
         }
     }
 

@@ -4,6 +4,9 @@ const API_BASE = "/api";
 // عناصر DOM
 const itemsContainer = document.getElementById("items-container");
 const searchInput = document.getElementById("search-input");
+const reserveDialog = document.getElementById("reserve-dialog");
+const reserveForm = document.getElementById("reserve-form");
+const reserveCancel = document.getElementById("reserve-cancel");
 
 let allItems = []; // لیست هدایا (از items.json)
 let reservationsMap = {}; // وضعیت رزروها (از /api/reservations)
@@ -50,16 +53,16 @@ async function fetchReservations() {
 }
 
 // ثبت رزرو
-async function reserveItem(itemId) {
+async function reserveItem(itemId, name, note) {
     const response = await fetch(`${API_BASE}/reservations`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ itemId }),
+        body: JSON.stringify({ itemId, name, note }),
     });
 
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
 
     if (response.status === 409) {
         throw new Error("این هدیه قبلاً رزرو شده است.");
@@ -126,6 +129,9 @@ function createSlider(images, itemId) {
 function createCard(item) {
     const reservation = reservationsMap[String(item.id)];
     const isReserved = Boolean(reservation && reservation.reserved);
+    const storeLinks = Array.isArray(item.storeLinks) ? item.storeLinks.filter((link) => {
+        try { return new URL(link).protocol === "https:"; } catch { return false; }
+    }) : [];
 
     return `
     <article class="gift-card" data-id="${item.id}">
@@ -141,6 +147,12 @@ function createCard(item) {
         </div>
 
         <p class="card-description">${escapeHtml(item.description || "")}</p>
+
+        ${item.priceRange || item.category ? `<div class="gift-meta">
+          ${item.priceRange ? `<span>بازه قیمت: ${escapeHtml(item.priceRange)}</span>` : ""}
+          ${item.category ? `<span>${escapeHtml(item.category)}</span>` : ""}
+        </div>` : ""}
+        ${storeLinks.length ? `<div class="gift-store-links">${storeLinks.map((link, index) => `<a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">خرید از فروشگاه ${index + 1}</a>`).join("")}</div>` : ""}
 
         <div class="card-actions">
           ${isReserved
@@ -172,19 +184,42 @@ function createCard(item) {
 // --- Handlers ---
 
 async function handleReserveClick(itemId) {
-    const confirmed = window.confirm("آیا از رزرو این هدیه مطمئن هستید؟");
-    if (!confirmed) {
-        return;
-    }
+    reserveForm.reset();
+    reserveDialog.showModal();
+    const formResult = await new Promise((resolve) => {
+        reserveForm.onsubmit = (event) => {
+            event.preventDefault();
+            const formData = new FormData(reserveForm);
+            reserveDialog.close("confirm");
+            resolve({ name: String(formData.get("name") || "").trim(), note: String(formData.get("note") || "").trim() });
+        };
+        reserveCancel.onclick = () => {
+            reserveDialog.close("cancel");
+            resolve(null);
+        };
+        reserveDialog.oncancel = () => resolve(null);
+    });
+    if (!formResult?.name) return;
 
     try {
-        await reserveItem(itemId);
-        await refreshItems();
-        alert("رزرو با موفقیت ثبت شد.");
+        await reserveItem(itemId, formResult.name, formResult.note);
     } catch (error) {
         console.error(error);
         alert(error.message || "خطا در ثبت رزرو.");
+        try {
+            await refreshItems();
+        } catch (refreshError) {
+            console.error("Could not refresh gifts after reservation error.", refreshError);
+        }
+        return;
+    }
+
+    alert("رزرو با موفقیت ثبت شد.");
+    try {
         await refreshItems();
+    } catch (refreshError) {
+        console.error("Reservation was saved, but the list could not be refreshed.", refreshError);
+        alert("رزرو ثبت شد، اما تازه‌سازی فهرست ناموفق بود. صفحه را دوباره بارگذاری کنید.");
     }
 }
 
@@ -220,7 +255,7 @@ async function refreshItems() {
 // --- DOM wiring ---
 
 function setupReserveButtons() {
-    const reserveButtons = document.querySelectorAll(".reserve-btn:not([disabled])");
+    const reserveButtons = document.querySelectorAll(".gift-card .reserve-btn:not([disabled])");
 
     reserveButtons.forEach((button) => {
         button.addEventListener("click", async () => {
@@ -229,7 +264,14 @@ function setupReserveButtons() {
             button.disabled = true;
             button.textContent = "در حال ثبت...";
 
-            await handleReserveClick(itemId);
+            try {
+                await handleReserveClick(itemId);
+            } finally {
+                if (button.isConnected) {
+                    button.disabled = false;
+                    button.textContent = "رزرو این هدیه";
+                }
+            }
         });
     });
 }

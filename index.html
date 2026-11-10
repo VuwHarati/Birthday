@@ -67,6 +67,20 @@
         </div>
     </footer>
 
+    <dialog id="reserve-dialog" class="reserve-dialog" aria-labelledby="reserve-dialog-title">
+        <form id="reserve-form" class="reserve-form">
+            <h2 id="reserve-dialog-title">اطلاعات رزرو</h2>
+            <label for="reserve-name">نام رزروکننده</label>
+            <input id="reserve-name" name="name" minlength="2" maxlength="80" required autocomplete="name" />
+            <label for="reserve-note">توضیحات</label>
+            <textarea id="reserve-note" name="note" minlength="2" maxlength="500" rows="3" required></textarea>
+            <div class="reserve-form-actions">
+                <button id="reserve-cancel" type="button" class="reserve-btn reserve-cancel">انصراف</button>
+                <button type="submit" class="reserve-btn">ثبت رزرو</button>
+            </div>
+        </form>
+    </dialog>
+
     <script src="app.js"></script>
 </body>
 </html>

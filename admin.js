@@ -11,13 +11,16 @@ const logoutBtn = document.getElementById("logout-btn");
 const itemForm = document.getElementById("item-form");
 const itemIdInput = document.getElementById("item-id");
 // ==================== Selectors ====================
-let titleInput, slugInput, descriptionInput, imagesInput;
+let titleInput, slugInput, descriptionInput, imagesInput, priceRangeInput, categoryInput, storeLinksInput;
 
 function initSelectors() {
     titleInput = document.getElementById("item-title");
     slugInput = document.getElementById("item-slug");
     descriptionInput = document.getElementById("item-description");
     imagesInput = document.getElementById("item-images");
+    priceRangeInput = document.getElementById("item-price-range");
+    categoryInput = document.getElementById("item-category");
+    storeLinksInput = document.getElementById("item-store-links");
 }
 
 const cancelEditBtn = document.getElementById("cancel-edit-btn");
@@ -27,6 +30,8 @@ const adminStatus = document.getElementById("admin-status");
 const formPanel = document.getElementById("admin-form-panel");
 const toast = document.getElementById("admin-toast");
 const toastContent = document.getElementById("admin-toast-content");
+const reservationCount = document.getElementById("reservation-count");
+const reservationFilter = document.getElementById("reservation-filter");
 
 let items = [];
 let reservationsMap = {};
@@ -69,6 +74,9 @@ function escapeHtml(value) {
 }
 //تابع آپلود عکس
 async function uploadToCloudinary(file) {
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowedTypes.includes(file.type)) throw new Error("فرمت مجاز تصویر: JPG، PNG، WebP یا GIF.");
+    if (file.size > 5 * 1024 * 1024) throw new Error("حداکثر حجم هر تصویر ۵ مگابایت است.");
     const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
     const formData = new FormData();
     formData.append("file", file);
@@ -79,11 +87,8 @@ async function uploadToCloudinary(file) {
         body: formData,
     });
 
-    if (!response.ok) {
-        throw new Error("خطا در آپلود عکس به Cloudinary");
-    }
-
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.secure_url) throw new Error(data.error?.message || "آپلود تصویر انجام نشد؛ تنظیمات Cloudinary را بررسی کنید.");
     return data.secure_url;
 }
 
@@ -179,9 +184,7 @@ async function fetchReservations() {
 
     const data = await response.json().catch(() => ({}));
 
-    if (!response.ok) {
-        return {};
-    }
+    if (!response.ok) throw new Error(data.error || "خطا در دریافت رزروها");
 
     return data;
 }
@@ -212,6 +215,9 @@ function resetForm() {
     itemForm.reset();
     itemIdInput.value = "";
     submitBtn.textContent = "ذخیره هدیه";
+    if (priceRangeInput) priceRangeInput.value = "";
+    if (categoryInput) categoryInput.value = "";
+    if (storeLinksInput) storeLinksInput.value = "";
 }
 
 function fillForm(item) {
@@ -220,6 +226,9 @@ function fillForm(item) {
     slugInput.value = item.slug || "";
     descriptionInput.value = item.description || "";
     imagesInput.value = Array.isArray(item.images) ? item.images.join("\n") : "";
+    priceRangeInput.value = item.priceRange || "";
+    categoryInput.value = item.category || "";
+    storeLinksInput.value = Array.isArray(item.storeLinks) ? item.storeLinks.join("\n") : "";
     submitBtn.textContent = "ثبت ویرایش";
     window.scrollTo({ top: 0, behavior: "smooth" });
     formPanel.classList.add("panel-pulse");
@@ -232,6 +241,10 @@ function fillForm(item) {
 function createAdminItemCard(item) {
     const reservation = reservationsMap[String(item.id)];
     const isReserved = Boolean(reservation && reservation.reserved);
+    const reservedAt = reservation?.reservedAt ? new Date(reservation.reservedAt).toLocaleString("fa-IR") : "ثبت نشده";
+    const storeLinks = Array.isArray(item.storeLinks) ? item.storeLinks.filter((link) => {
+        try { return new URL(link).protocol === "https:"; } catch { return false; }
+    }) : [];
 
     return `
         <article class="admin-item-card ${isReserved ? "is-reserved" : "is-available"}">
@@ -248,6 +261,22 @@ function createAdminItemCard(item) {
 
             <p class="admin-item-description">${escapeHtml(item.description || "")}</p>
 
+            <div class="admin-item-extra">
+                ${item.priceRange ? `<p><strong>بازه قیمت:</strong> ${escapeHtml(item.priceRange)}</p>` : ""}
+                ${item.category ? `<p><strong>دسته‌بندی/اولویت:</strong> ${escapeHtml(item.category)}</p>` : ""}
+                ${storeLinks.map((link, index) => `<a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">لینک فروشگاه ${index + 1}</a>`).join(" ")}
+            </div>
+
+            ${isReserved ? `
+                <div class="reservation-details">
+                    <strong>اطلاعات رزرو</strong>
+                    <p>نام: ${escapeHtml(reservation.name || "ثبت نشده (رزرو قدیمی)")}</p>
+                    <p>توضیحات: ${escapeHtml(reservation.note || "—")}</p>
+                    <p>تاریخ: ${escapeHtml(reservedAt)}</p>
+                    <button class="admin-btn admin-btn-muted release-reservation-btn" type="button" data-id="${item.id}">آزادسازی رزرو</button>
+                </div>
+            ` : ""}
+
             <div class="admin-item-footer">
                 <p class="admin-item-meta">
                     تعداد عکس‌ها: ${Array.isArray(item.images) ? item.images.length : 0}
@@ -257,7 +286,7 @@ function createAdminItemCard(item) {
                     <button class="icon-btn icon-btn-edit edit-item-btn" type="button" data-id="${item.id}" aria-label="ویرایش">
                         <span aria-hidden="true">✏️</span>
                     </button>
-                    <button class="icon-btn icon-btn-delete delete-item-btn" type="button" data-id="${item.id}" aria-label="حذف">
+                    <button class="icon-btn icon-btn-delete delete-item-btn" type="button" data-id="${item.id}" aria-label="حذف" ${isReserved ? "disabled title=\"ابتدا رزرو را آزاد کنید\"" : ""}>
                         <span aria-hidden="true">🗑️</span>
                     </button>
                 </div>
@@ -267,17 +296,22 @@ function createAdminItemCard(item) {
 }
 
 function renderItems() {
-    if (!items.length) {
+    const filter = reservationFilter?.value || "all";
+    const filteredItems = items.filter((item) => {
+        const isReserved = Boolean(reservationsMap[String(item.id)]?.reserved);
+        return filter === "all" || (filter === "reserved" && isReserved) || (filter === "available" && !isReserved);
+    });
+    if (!filteredItems.length) {
         adminItems.innerHTML = `
             <div class="empty-state">
                 <div class="empty-state-icon">🎁</div>
-                <p>هنوز هدیه‌ای ثبت نشده است.</p>
+                <p>${items.length ? "هدیه‌ای در این فیلتر پیدا نشد." : "هنوز هدیه‌ای ثبت نشده است."}</p>
             </div>
         `;
         return;
     }
 
-    adminItems.innerHTML = items.map(createAdminItemCard).join("");
+    adminItems.innerHTML = filteredItems.map(createAdminItemCard).join("");
 
     document.querySelectorAll(".edit-item-btn").forEach((button) => {
         button.addEventListener("click", () => {
@@ -308,11 +342,35 @@ function renderItems() {
             }
         });
     });
+
+    document.querySelectorAll(".release-reservation-btn").forEach((button) => {
+        button.addEventListener("click", async () => {
+            const itemId = Number(button.dataset.id);
+            if (!window.confirm("رزرو این هدیه آزاد شود؟")) return;
+            button.disabled = true;
+            try {
+                const response = await fetch(`${API_BASE}/reservations`, {
+                    method: "DELETE",
+                    headers: getAuthHeaders(true),
+                    body: JSON.stringify({ itemId }),
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(data.error || "لغو رزرو انجام نشد.");
+                showSuccess("رزرو آزاد شد.");
+                await refreshAdminData();
+            } catch (error) {
+                button.disabled = false;
+                showError(error.message || "لغو رزرو انجام نشد.");
+            }
+        });
+    });
 }
 
 async function refreshAdminData() {
     setStatus("در حال بارگذاری اطلاعات ادمین...");
     [items, reservationsMap] = await Promise.all([fetchItems(), fetchReservations()]);
+    const totalReservations = items.filter((item) => reservationsMap[String(item.id)]?.reserved).length;
+    reservationCount.textContent = new Intl.NumberFormat("fa-IR").format(totalReservations);
     renderItems();
     unlockAdminUi();
     setStatus(`${items.length} هدیه موجود است.`);
@@ -361,6 +419,9 @@ itemForm.addEventListener("submit", async (event) => {
         slug: slugInput.value.trim(),
         description: descriptionInput.value.trim(),
         images: imagesInput.value,
+        priceRange: priceRangeInput.value.trim(),
+        category: categoryInput.value.trim(),
+        storeLinks: storeLinksInput.value,
     };
 
     const itemId = Number(itemIdInput.value || 0);
@@ -383,6 +444,7 @@ itemForm.addEventListener("submit", async (event) => {
 
 async function init() {
     initSelectors(); // ← اضافه شد
+    reservationFilter.addEventListener("change", renderItems);
 
     const savedToken = getToken();
 
@@ -419,6 +481,19 @@ if (uploadBtn && uploadInput) {
         const file = uploadInput.files[0];
         if (!file) {
             showError("لطفاً یک عکس انتخاب کنید.");
+            return;
+        }
+
+        let currentImages = [];
+        try {
+            const raw = imagesInput.value.trim();
+            const parsed = raw.startsWith("[") ? JSON.parse(raw) : null;
+            currentImages = Array.isArray(parsed) ? parsed : raw.split(/\r?\n/).map((value) => value.trim()).filter(Boolean);
+        } catch {
+            currentImages = imagesInput.value.split(/\r?\n/).map((value) => value.trim()).filter(Boolean);
+        }
+        if (currentImages.length >= 8) {
+            showError("حداکثر ۸ تصویر برای هر هدیه مجاز است.");
             return;
         }
 

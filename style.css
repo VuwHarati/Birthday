@@ -1,4 +1,4 @@
-@font-face {
+﻿@font-face {
     font-family: '2Koodak';
     src: url('/fonts/KOODAKBOLD.TTF') format('truetype');
     font-weight: bold;
@@ -224,11 +224,6 @@ a {
     font-size: 0.93rem;
 }
 
-.gifts-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 18px;
-}
 
 .gift-card {
     position: relative;
@@ -683,6 +678,113 @@ a {
     gap: 14px;
 }
 
+.admin-summary-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0 0 16px;
+    padding: 14px 16px;
+    border: 1px solid #bbf7d0;
+    border-radius: 14px;
+    background: #f0fdf4;
+    color: #166534;
+}
+
+.admin-summary-card strong {
+    font-size: 1.4rem;
+}
+
+.reservation-details,
+.admin-item-extra {
+    margin: 12px 0;
+    padding: 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.72);
+    line-height: 1.8;
+}
+
+.reservation-details p,
+.admin-item-extra p {
+    margin: 4px 0;
+}
+
+.reservation-details .admin-btn {
+    margin-top: 8px;
+}
+
+.admin-item-extra a,
+.gift-store-links a {
+    display: inline-block;
+    margin: 4px 8px 4px 0;
+    color: #9f5b66;
+    font-weight: 700;
+}
+
+.delete-item-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+}
+
+.gift-meta,
+.gift-store-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    margin-top: 10px;
+}
+
+.gift-meta span {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.reserve-dialog {
+    width: min(92vw, 460px);
+    border: 0;
+    border-radius: 18px;
+    padding: 0;
+    color: var(--text-main);
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+}
+
+.reserve-dialog::backdrop {
+    background: rgba(15, 23, 42, 0.52);
+    backdrop-filter: blur(3px);
+}
+
+.reserve-form {
+    display: grid;
+    gap: 12px;
+    padding: 24px;
+}
+
+.reserve-form h2 {
+    margin: 0 0 4px;
+}
+
+.reserve-form input,
+.reserve-form textarea {
+    width: 100%;
+    border: 1px solid #d0d7e2;
+    border-radius: 10px;
+    padding: 12px;
+    font: inherit;
+}
+
+.reserve-form-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.reserve-form-actions .reserve-btn {
+    flex: 1;
+}
+
+.reserve-cancel {
+    background: #eef2f7;
+    color: #334155;
+}
+
 .admin-item-card {
     border-radius: 16px;
     border: 1px solid #e5e7eb;
@@ -852,65 +954,66 @@ a {
     }
 }
 
+/* ==================== Gifts Grid (جدید) ==================== */
+/* ==================== Gifts Grid (بهبود یافته) ==================== */
+.gifts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+}
+
+/* تبلت و بالاتر */
 @media (min-width: 640px) {
-    .hero {
-        padding-top: 48px;
-    }
-
-    .hero-content {
-        padding: 34px 24px;
-    }
-
-    .hero-title {
-        font-size: 2.35rem;
-    }
-
     .gifts-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 14px;
     }
 }
 
+/* لپ‌تاپ */
 @media (min-width: 900px) {
-    .hero-content {
-        padding: 42px 32px;
-    }
-
-    .hero-title {
-        font-size: 2.9rem;
-    }
-
-    .hero-text {
-        font-size: 1rem;
-    }
-
-    .section-heading {
-        flex-direction: row;
-        align-items: end;
-        justify-content: space-between;
-        gap: 20px;
-    }
-
-    .section-note {
-        max-width: 460px;
-        text-align: left;
-    }
-
     .gifts-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 22px;
-    }
-
-    .card-content {
-        padding: 18px 18px 20px;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
     }
 }
 
+/* دسکتاپ */
 @media (min-width: 1200px) {
     .gifts-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 18px;
     }
 }
+
+/* ==================== بهبود ظاهر کارت‌ها ==================== */
+.gifts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 20px;
+    padding: 20px 0;
+}
+
+.gifts-grid img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+.gifts-grid .card {
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+    transition: transform 0.2s ease;
+}
+
+.gifts-grid .card:hover {
+    transform: translateY(-4px);
+}
+
+
+/* ==================== Admin & Other Media Queries ==================== */
 
 @media (max-width: 960px) {
     .admin-layout {

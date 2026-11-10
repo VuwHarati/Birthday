@@ -59,21 +59,31 @@
                     <input id="item-id" type="hidden" />
 
                     <label class="admin-label" for="item-title">عنوان</label>
-                    <input id="item-title" class="admin-input" type="text" required />
+                    <input id="item-title" class="admin-input" type="text" maxlength="120" required />
 
                     <label class="admin-label" for="item-slug">اسلاگ</label>
-                    <input id="item-slug" class="admin-input" type="text" />
+                    <input id="item-slug" class="admin-input" type="text" maxlength="120" />
 
                     <label class="admin-label" for="item-description">توضیحات</label>
-                    <textarea id="item-description" class="admin-textarea" rows="4"></textarea>
+                    <textarea id="item-description" class="admin-textarea" rows="4" maxlength="2000"></textarea>
+
+                    <label class="admin-label" for="item-price-range">بازه قیمت (اختیاری)</label>
+                    <input id="item-price-range" class="admin-input" type="text" maxlength="100" placeholder="مثلاً ۱ تا ۲ میلیون تومان" />
+
+                    <label class="admin-label" for="item-category">دسته‌بندی یا اولویت</label>
+                    <input id="item-category" class="admin-input" type="text" maxlength="60" placeholder="مثلاً مهم، ایده‌آل، پوشاک" />
+
+                    <label class="admin-label" for="item-store-links">لینک فروشگاه‌ها (هر لینک در یک خط)</label>
+                    <textarea id="item-store-links" class="admin-textarea" rows="3" placeholder="https://..."></textarea>
 
                     <label class="admin-label">آپلود عکس (Cloudinary)</label>
                     <div class="image-upload-section">
-                        <input type="file" id="image-upload-input" accept="image/*" class="admin-input" />
+                        <input type="file" id="image-upload-input" accept="image/jpeg,image/png,image/webp,image/gif" class="admin-input" />
                         <button type="button" id="upload-image-btn" class="admin-btn admin-btn-muted">
                             آپلود عکس
                         </button>
                         <div id="upload-status" style="margin-top: 8px; font-size: 0.9rem;"></div>
+                        <small>حداکثر ۸ تصویر؛ JPG، PNG، WebP یا GIF؛ حداکثر ۵ مگابایت برای هر فایل.</small>
                         <div id="image-preview" style="margin-top: 10px;"></div>
                     </div>
 
@@ -101,6 +111,16 @@
                 </div>
 
                 <div id="admin-status" class="admin-status">توکن ادمین وارد نشده است.</div>
+                <div class="admin-summary-card">
+                    <span>تعداد کل رزروها</span>
+                    <strong id="reservation-count">۰</strong>
+                </div>
+                <label class="admin-label" for="reservation-filter">فیلتر هدیه‌ها</label>
+                <select id="reservation-filter" class="admin-input">
+                    <option value="all">همه</option>
+                    <option value="reserved">رزرو شده</option>
+                    <option value="available">آزاد</option>
+                </select>
                 <div id="admin-items" class="admin-items-list"></div>
             </section>
         </section>
