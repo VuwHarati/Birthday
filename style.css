@@ -1699,3 +1699,348 @@ a {
         width: 100%;
     }
 }
+
+/* Consistent, responsive catalog cards */
+.gifts-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 245px), 1fr));
+    align-items: stretch;
+    gap: 18px;
+    padding: 18px 0;
+}
+
+.gifts-grid .gift-card {
+    min-width: 0;
+    border: 1px solid rgba(183, 110, 121, 0.14);
+    border-radius: 18px;
+    background: #fff;
+}
+
+.gifts-grid .card-image {
+    flex: 0 0 auto;
+    aspect-ratio: 4 / 3;
+}
+
+.gifts-grid .card-image img {
+    height: 100%;
+    border-radius: 0;
+}
+
+.gifts-grid .card-content {
+    gap: 0;
+    padding: 14px;
+}
+
+.gifts-grid .card-top {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 7px;
+    margin-bottom: 8px;
+}
+
+.gifts-grid .status-badge {
+    min-height: 26px;
+    padding: 4px 9px;
+    font-size: 0.76rem;
+}
+
+.gifts-grid .card-title {
+    display: -webkit-box;
+    overflow: hidden;
+    min-height: 3.1em;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: clamp(1.08rem, 1.35vw, 1.3rem);
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+.gifts-grid .card-description {
+    display: -webkit-box;
+    overflow: hidden;
+    min-height: 4.8em;
+    margin: 0 0 8px;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    font-size: 0.88rem;
+    line-height: 1.65;
+}
+
+.gifts-grid .gift-meta {
+    min-height: 30px;
+    margin-top: 3px;
+    gap: 6px;
+}
+
+.gifts-grid .gift-meta span,
+.gifts-grid .gift-store-links a {
+    max-width: 100%;
+    padding: 5px 8px;
+    border: 1px solid #f0dfe3;
+    border-radius: 8px;
+    background: #fff8fa;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.gifts-grid .gift-store-links {
+    margin: 7px 0 10px;
+}
+
+.gifts-grid .card-actions {
+    margin-top: auto;
+    padding-top: 8px;
+}
+
+.gifts-grid .reserve-btn {
+    min-height: 42px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    line-height: 1.4;
+}
+
+/* Place the admin shortcut in the hero corner without covering its text */
+.admin-entry-link {
+    position: absolute;
+    z-index: 4;
+    top: 12px;
+    left: 14px;
+    margin: 0;
+    min-height: 34px;
+    padding: 0 11px;
+    border-color: rgba(159, 91, 102, 0.25);
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 3px 12px rgba(52, 37, 43, 0.08);
+}
+
+.home-page .hero-content {
+    padding-top: 58px;
+}
+
+/* Admin catalog filters, cards and mobile four-item pagination */
+.admin-list-filters {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) repeat(2, minmax(180px, 0.8fr));
+    gap: 12px;
+    margin: 16px 0;
+    padding: 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.admin-list-filters .admin-input {
+    min-height: 42px;
+}
+
+.admin-items-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    align-items: stretch;
+}
+
+.admin-item-card {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 14px;
+}
+
+.admin-item-image {
+    display: grid;
+    aspect-ratio: 4 / 3;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 10px;
+    background: #f1f5f9;
+    color: #94a3b8;
+    font-size: 0.82rem;
+}
+
+.admin-item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.admin-item-head {
+    align-items: flex-start;
+    gap: 7px;
+    margin: 0;
+}
+
+.admin-item-title {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: 0.98rem;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+.admin-item-head .status-badge {
+    min-height: 24px;
+    padding: 3px 7px;
+    font-size: 0.72rem;
+}
+
+.admin-item-description {
+    display: -webkit-box;
+    overflow: hidden;
+    min-height: 4.5em;
+    margin: 0;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+
+.admin-item-extra {
+    font-size: 0.8rem;
+    overflow-wrap: anywhere;
+}
+
+.admin-item-footer {
+    align-items: center;
+    margin-top: auto;
+}
+
+.admin-item-actions {
+    gap: 7px;
+}
+
+.admin-pagination {
+    display: flex;
+    min-height: 44px;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+    color: #64748b;
+    font-size: 0.86rem;
+}
+
+.admin-page-btn {
+    min-height: 36px;
+    padding: 0 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+    color: #334155;
+    font: inherit;
+}
+
+.admin-page-btn:disabled {
+    cursor: default;
+    opacity: 0.45;
+}
+
+@media (min-width: 1200px) {
+    .admin-items-list {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .admin-items-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .admin-list-filters {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 10px;
+    }
+
+    .admin-items-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+    }
+
+    .admin-item-card {
+        padding: 8px;
+        gap: 7px;
+    }
+
+    .admin-item-head {
+        flex-direction: column;
+    }
+
+    .admin-item-footer {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+    }
+
+    .admin-item-actions {
+        justify-content: flex-start;
+    }
+
+    .admin-item-description {
+        min-height: 0;
+        font-size: 0.76rem;
+    }
+
+    .admin-item-meta {
+        font-size: 0.75rem;
+    }
+
+    .gifts-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+    }
+
+    .home-page .gifts-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+    }
+
+    .gifts-grid .card-content {
+        padding: 10px;
+    }
+
+    .home-page .gifts-grid .card-content {
+        padding: 14px;
+    }
+
+    .gifts-grid .card-title {
+        font-size: 1rem;
+    }
+
+    .gifts-grid .card-description {
+        min-height: 0;
+        font-size: 0.78rem;
+    }
+
+    .home-page .gifts-grid .card-description {
+        min-height: 0;
+        font-size: 0.86rem;
+    }
+
+    .gifts-grid .gift-meta span,
+    .gifts-grid .gift-store-links a {
+        font-size: 0.72rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .gifts-grid,
+    .admin-items-list {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .admin-entry-link {
+        left: 10px;
+        top: 10px;
+    }
+
+    .home-page .hero-content {
+        padding-top: 58px;
+    }
+}

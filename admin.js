@@ -32,11 +32,15 @@ const toast = document.getElementById("admin-toast");
 const toastContent = document.getElementById("admin-toast-content");
 const reservationCount = document.getElementById("reservation-count");
 const reservationFilter = document.getElementById("reservation-filter");
+const adminSearchInput = document.getElementById("admin-search-input");
+const adminCategoryFilter = document.getElementById("admin-category-filter");
+const adminPagination = document.getElementById("admin-pagination");
 
 let items = [];
 let reservationsMap = {};
 let categories = [];
 let toastTimer = null;
+let adminPage = 1;
 const imageLinksList = document.getElementById("image-links-list");
 const storeLinksList = document.getElementById("store-links-list");
 const categoriesDialog = document.getElementById("categories-dialog");
@@ -473,9 +477,17 @@ function createAdminItemCard(item) {
     const priceText = Number.isSafeInteger(item.priceMin) && Number.isSafeInteger(item.priceMax)
         ? `${formatTomanAmount(item.priceMin)} تا ${formatTomanAmount(item.priceMax)} تومان`
         : item.priceRange || "";
+    const previewImage = Array.isArray(item.images) ? item.images.map((image) => {
+        const value = String(image || "");
+        if (/^Images\/[a-zA-Z0-9._-]+\.(jpg|jpeg|png|webp|gif)$/i.test(value)) return `/${value}`;
+        try { return new URL(value).protocol === "https:" ? value : ""; } catch { return ""; }
+    }).find(Boolean) || "" : "";
 
     return `
         <article class="admin-item-card ${isReserved ? "is-reserved" : "is-available"}">
+            <div class="admin-item-image">${previewImage
+                ? `<img src="${escapeHtml(previewImage)}" alt="تصویر ${escapeHtml(item.title)}" loading="lazy" />`
+                : `<span>بدون تصویر</span>`}</div>
             <div class="admin-item-head">
                 <div class="admin-item-heading">
                     <h3 class="admin-item-title">${escapeHtml(item.title)}</h3>
@@ -525,10 +537,19 @@ function createAdminItemCard(item) {
 
 function renderItems() {
     const filter = reservationFilter?.value || "all";
+    const query = normalizeAdminSearch(adminSearchInput?.value || "");
+    const selectedCategory = adminCategoryFilter?.value || "";
     const filteredItems = items.filter((item) => {
         const isReserved = Boolean(reservationsMap[String(item.id)]?.reserved);
-        return filter === "all" || (filter === "reserved" && isReserved) || (filter === "available" && !isReserved);
+        const matchesStatus = filter === "all" || (filter === "reserved" && isReserved) || (filter === "available" && !isReserved);
+        const normalizedTitle = normalizeAdminSearch(item.title || "");
+        return matchesStatus
+            && (!query || normalizedTitle.includes(query))
+            && (!selectedCategory || item.category === selectedCategory);
     });
+    const pageSize = window.matchMedia("(max-width: 640px)").matches ? 4 : 8;
+    const pageCount = Math.max(1, Math.ceil(filteredItems.length / pageSize));
+    adminPage = Math.min(adminPage, pageCount);
     if (!filteredItems.length) {
         adminItems.innerHTML = `
             <div class="empty-state">
@@ -536,10 +557,24 @@ function renderItems() {
                 <p>${items.length ? "هدیه‌ای در این فیلتر پیدا نشد." : "هنوز هدیه‌ای ثبت نشده است."}</p>
             </div>
         `;
+        adminPagination.replaceChildren();
         return;
     }
 
-    adminItems.innerHTML = filteredItems.map(createAdminItemCard).join("");
+    const pageItems = filteredItems.slice((adminPage - 1) * pageSize, adminPage * pageSize);
+    adminItems.innerHTML = pageItems.map(createAdminItemCard).join("");
+    adminPagination.innerHTML = pageCount > 1 ? `
+        <button class="admin-page-btn" type="button" data-page="${adminPage - 1}" ${adminPage === 1 ? "disabled" : ""}>قبلی</button>
+        <span>صفحه ${new Intl.NumberFormat("fa-IR").format(adminPage)} از ${new Intl.NumberFormat("fa-IR").format(pageCount)} · ${new Intl.NumberFormat("fa-IR").format(filteredItems.length)} هدیه</span>
+        <button class="admin-page-btn" type="button" data-page="${adminPage + 1}" ${adminPage === pageCount ? "disabled" : ""}>بعدی</button>
+    ` : `<span>${new Intl.NumberFormat("fa-IR").format(filteredItems.length)} هدیه</span>`;
+    adminPagination.querySelectorAll("[data-page]").forEach((button) => {
+        button.addEventListener("click", () => {
+            adminPage = Number(button.dataset.page);
+            renderItems();
+            adminItems.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+    });
 
     document.querySelectorAll(".edit-item-btn").forEach((button) => {
         button.addEventListener("click", () => {
@@ -594,10 +629,26 @@ function renderItems() {
     });
 }
 
+function normalizeAdminSearch(value) {
+    return String(value || "").toLocaleLowerCase().replace(/[يى]/g, "ی").replace(/ك/g, "ک").trim();
+}
+
+function populateAdminCategoryFilter() {
+    const selected = adminCategoryFilter.value;
+    const names = [...new Set([
+        ...categories,
+        ...items.map((item) => String(item.category || "").trim()),
+    ].filter(Boolean))].sort((a, b) => a.localeCompare(b, "fa"));
+    adminCategoryFilter.replaceChildren(new Option("همه دسته‌ها", ""));
+    names.forEach((name) => adminCategoryFilter.add(new Option(name, name)));
+    adminCategoryFilter.value = names.includes(selected) ? selected : "";
+}
+
 async function refreshAdminData() {
     setStatus("در حال بارگذاری اطلاعات ادمین...");
     [items, reservationsMap, categories] = await Promise.all([fetchItems(), fetchReservations(), fetchCategories()]);
     renderCategoryOptions(categoryInput.value);
+    populateAdminCategoryFilter();
     const totalReservations = items.filter((item) => reservationsMap[String(item.id)]?.reserved).length;
     reservationCount.textContent = new Intl.NumberFormat("fa-IR").format(totalReservations);
     renderItems();
@@ -672,7 +723,6 @@ itemForm.addEventListener("submit", async (event) => {
 
 async function init() {
     initSelectors(); // ← اضافه شد
-    reservationFilter.addEventListener("change", renderItems);
 
     const savedToken = getToken();
 
@@ -700,6 +750,10 @@ async function init() {
 init();
 document.getElementById("add-image-link-btn").addEventListener("click", () => addImageLink());
 document.getElementById("add-store-link-btn").addEventListener("click", () => addStoreLink());
+adminSearchInput.addEventListener("input", () => { adminPage = 1; renderItems(); });
+adminCategoryFilter.addEventListener("change", () => { adminPage = 1; renderItems(); });
+reservationFilter.addEventListener("change", () => { adminPage = 1; renderItems(); });
+window.addEventListener("resize", () => renderItems());
 document.getElementById("manage-categories-btn").addEventListener("click", () => {
     renderCategoriesDialog();
     categoriesDialog.showModal();

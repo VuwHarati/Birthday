@@ -162,13 +162,28 @@
                     <span>تعداد کل رزروها</span>
                     <strong id="reservation-count">۰</strong>
                 </div>
-                <label class="admin-label" for="reservation-filter">فیلتر هدیه‌ها</label>
-                <select id="reservation-filter" class="admin-input">
-                    <option value="all">همه</option>
-                    <option value="reserved">رزرو شده</option>
-                    <option value="available">آزاد</option>
-                </select>
+                <div class="admin-list-filters">
+                    <label class="admin-field">
+                        <span class="admin-label">جست‌وجو بر اساس نام</span>
+                        <input id="admin-search-input" class="admin-input" type="search" placeholder="نام هدیه را بنویس" autocomplete="off" />
+                    </label>
+                    <label class="admin-field">
+                        <span class="admin-label">دسته‌بندی</span>
+                        <select id="admin-category-filter" class="admin-input">
+                            <option value="">همه دسته‌ها</option>
+                        </select>
+                    </label>
+                    <label class="admin-field">
+                        <span class="admin-label">وضعیت رزرو</span>
+                        <select id="reservation-filter" class="admin-input">
+                            <option value="all">همه</option>
+                            <option value="reserved">رزرو شده</option>
+                            <option value="available">آزاد</option>
+                        </select>
+                    </label>
+                </div>
                 <div id="admin-items" class="admin-items-list"></div>
+                <nav id="admin-pagination" class="admin-pagination" aria-label="صفحه‌بندی هدایا"></nav>
             </section>
         </section>
     </main>
