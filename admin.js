@@ -82,10 +82,23 @@ async function uploadToCloudinary(file) {
     formData.append("file", file);
     formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
 
-    const response = await fetch(url, {
-        method: "POST",
-        body: formData,
-    });
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 30000);
+    let response;
+    try {
+        response = await fetch(url, {
+            method: "POST",
+            body: formData,
+            signal: controller.signal,
+        });
+    } catch (error) {
+        if (error.name === "AbortError") {
+            throw new Error("اتصال به Cloudinary بیش از ۳۰ ثانیه طول کشید. اتصال اینترنت و دسترسی به Cloudinary را بررسی کن.");
+        }
+        throw new Error("ارتباط با Cloudinary برقرار نشد. اتصال اینترنت، دسترسی شبکه و تنظیمات CORS را بررسی کن.");
+    } finally {
+        window.clearTimeout(timeoutId);
+    }
 
     const data = await response.json().catch(() => ({}));
     if (!response.ok || !data.secure_url) throw new Error(data.error?.message || "آپلود تصویر انجام نشد؛ تنظیمات Cloudinary را بررسی کنید.");
@@ -529,6 +542,7 @@ if (uploadBtn && uploadInput) {
 
             uploadStatus.textContent = "آپلود موفق بود ✓";
             uploadStatus.style.color = "green";
+            uploadInput.value = "";
             showSuccess("عکس با موفقیت آپلود شد.");
 
         } catch (error) {
@@ -537,7 +551,6 @@ if (uploadBtn && uploadInput) {
             showError(error.message);
         } finally {
             uploadBtn.disabled = false;
-            uploadInput.value = "";
         }
     });
 }
