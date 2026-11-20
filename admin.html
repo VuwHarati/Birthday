@@ -58,45 +58,92 @@
                 <form id="item-form" class="admin-form">
                     <input id="item-id" type="hidden" />
 
-                    <label class="admin-label" for="item-title">عنوان</label>
-                    <input id="item-title" class="admin-input" type="text" maxlength="120" required />
+                    <fieldset class="admin-form-section">
+                        <legend>اطلاعات هدیه</legend>
+                        <div class="admin-field-grid">
+                            <div class="admin-field">
+                                <label class="admin-label" for="item-title">عنوان هدیه <span class="required-mark">*</span></label>
+                                <input id="item-title" class="admin-input" type="text" maxlength="120" required placeholder="مثلاً هدفون بی‌سیم" />
+                            </div>
+                            <div class="admin-field">
+                                <label class="admin-label" for="item-slug">شناسهٔ کوتاه (اختیاری)</label>
+                                <input id="item-slug" class="admin-input" type="text" maxlength="120" placeholder="برای ساخت لینک اختصاصی" />
+                            </div>
+                            <div class="admin-field admin-field-full">
+                                <label class="admin-label" for="item-description">توضیحات</label>
+                                <textarea id="item-description" class="admin-textarea" rows="3" maxlength="2000" placeholder="توضیح کوتاه دربارهٔ هدیه"></textarea>
+                            </div>
+                        </div>
+                    </fieldset>
 
-                    <label class="admin-label" for="item-slug">اسلاگ</label>
-                    <input id="item-slug" class="admin-input" type="text" maxlength="120" />
+                    <fieldset class="admin-form-section">
+                        <legend>قیمت و دسته‌بندی</legend>
+                        <input id="item-legacy-price" type="hidden" />
+                        <div class="admin-field-grid">
+                            <div class="admin-field admin-field-full">
+                                <span class="admin-label">بازه قیمت (اختیاری)</span>
+                                <div class="price-range-fields">
+                                    <label class="compact-field-label" for="item-price-min">از</label>
+                                    <div class="amount-control">
+                                        <input id="item-price-min" class="admin-input" type="text" inputmode="numeric" autocomplete="off" placeholder="۱٬۰۰۰" />
+                                        <span>تومان</span>
+                                    </div>
+                                    <label class="compact-field-label" for="item-price-max">تا</label>
+                                    <div class="amount-control">
+                                        <input id="item-price-max" class="admin-input" type="text" inputmode="numeric" autocomplete="off" placeholder="۱٬۰۰۰٬۰۰۰٬۰۰۰" />
+                                        <span>تومان</span>
+                                    </div>
+                                </div>
+                                <small id="legacy-price-note" class="field-hint" hidden></small>
+                            </div>
+                            <div class="admin-field admin-field-full">
+                                <div class="field-label-row">
+                                    <label class="admin-label" for="item-category">دسته‌بندی</label>
+                                    <button id="manage-categories-btn" class="text-action" type="button">مدیریت دسته‌ها</button>
+                                </div>
+                                <select id="item-category" class="admin-input">
+                                    <option value="">بدون دسته‌بندی</option>
+                                </select>
+                            </div>
+                        </div>
+                    </fieldset>
 
-                    <label class="admin-label" for="item-description">توضیحات</label>
-                    <textarea id="item-description" class="admin-textarea" rows="4" maxlength="2000"></textarea>
+                    <fieldset class="admin-form-section">
+                        <legend>لینک فروشگاه‌ها</legend>
+                        <div class="field-label-row">
+                            <span class="field-hint">برای هر فروشگاه عنوان و لینک محصول را وارد کنید.</span>
+                            <button id="add-store-link-btn" class="admin-btn admin-btn-outline admin-btn-small" type="button">＋ افزودن لینک</button>
+                        </div>
+                        <div id="store-links-list" class="repeatable-list"></div>
+                        <small class="field-hint">لینک محصول رو کپی کن و اینجا قرارش بده</small>
+                    </fieldset>
 
-                    <label class="admin-label" for="item-price-range">بازه قیمت (اختیاری)</label>
-                    <input id="item-price-range" class="admin-input" type="text" maxlength="100" placeholder="مثلاً ۱ تا ۲ میلیون تومان" />
-
-                    <label class="admin-label" for="item-category">دسته‌بندی یا اولویت</label>
-                    <input id="item-category" class="admin-input" type="text" maxlength="60" placeholder="مثلاً مهم، ایده‌آل، پوشاک" />
-
-                    <label class="admin-label" for="item-store-links">لینک فروشگاه‌ها (هر لینک در یک خط)</label>
-                    <textarea id="item-store-links" class="admin-textarea" rows="3" placeholder="https://..."></textarea>
-
-                    <label class="admin-label">آپلود عکس (Cloudinary)</label>
-                    <div class="image-upload-section">
-                        <input type="file" id="image-upload-input" accept="image/jpeg,image/png,image/webp,image/gif" class="admin-input" />
-                        <button type="button" id="upload-image-btn" class="admin-btn admin-btn-muted">
-                            آپلود عکس
-                        </button>
-                        <div id="upload-status" style="margin-top: 8px; font-size: 0.9rem;"></div>
-                        <small>حداکثر ۸ تصویر؛ JPG، PNG، WebP یا GIF؛ حداکثر ۵ مگابایت برای هر فایل.</small>
-                        <div id="image-preview" style="margin-top: 10px;"></div>
-                    </div>
-
-                    <label class="admin-label" for="item-images">لینک عکس‌ها (هر لینک در یک خط)</label>
-                        <textarea id="item-images" class="admin-textarea" rows="3"></textarea>
+                    <fieldset class="admin-form-section">
+                        <legend>تصاویر هدیه</legend>
+                        <div class="image-upload-section">
+                            <div class="admin-field">
+                                <label class="admin-label" for="image-upload-input">آپلود تصویر</label>
+                                <input type="file" id="image-upload-input" accept="image/jpeg,image/png,image/webp,image/gif" class="admin-input" />
+                            </div>
+                            <button type="button" id="upload-image-btn" class="admin-btn admin-btn-upload">آپلود تصویر انتخاب‌شده</button>
+                            <div id="upload-status" class="upload-status"></div>
+                            <small class="field-hint">حداکثر ۸ تصویر؛ JPG، PNG، WebP یا GIF؛ حداکثر ۵ مگابایت برای هر فایل.</small>
+                            <div id="image-preview" class="image-upload-preview"></div>
+                        </div>
+                        <div class="field-label-row image-links-heading">
+                            <span class="admin-label">یا لینک تصویر</span>
+                            <button id="add-image-link-btn" class="admin-btn admin-btn-outline admin-btn-small" type="button">＋ افزودن لینک عکس</button>
+                        </div>
+                        <div id="image-links-list" class="image-links-list"></div>
+                    </fieldset>
 
 
                     <div class="admin-form-actions">
                         <button id="submit-btn" type="submit" class="admin-btn admin-btn-success admin-btn-wide">
-                            ذخیره هدیه
+                            <span aria-hidden="true">✓</span> ذخیره هدیه
                         </button>
                         <button id="cancel-edit-btn" type="button" class="admin-btn admin-btn-muted">
-                            برگشت
+                            انصراف / پاک‌کردن فرم
                         </button>
                     </div>
                 </form>
@@ -125,6 +172,24 @@
             </section>
         </section>
     </main>
+
+    <dialog id="categories-dialog" class="admin-dialog">
+        <div class="admin-dialog-content">
+            <div class="field-label-row">
+                <div>
+                    <p class="section-subtitle">اطلاعات پایه</p>
+                    <h2 class="section-title">مدیریت دسته‌بندی‌ها</h2>
+                </div>
+                <button id="close-categories-btn" class="icon-btn" type="button" aria-label="بستن">×</button>
+            </div>
+            <form id="new-category-form" class="category-add-form">
+                <label class="sr-only" for="new-category-name">نام دسته‌بندی جدید</label>
+                <input id="new-category-name" class="admin-input" type="text" maxlength="60" placeholder="مثلاً پوشاک، لوازم خانه" />
+                <button class="admin-btn admin-btn-success" type="submit">افزودن</button>
+            </form>
+            <div id="categories-list" class="categories-list"></div>
+        </div>
+    </dialog>
 
     <div id="admin-toast" class="admin-toast" hidden>
         <div id="admin-toast-content" class="admin-toast-content"></div>

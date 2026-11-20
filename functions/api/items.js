@@ -27,6 +27,8 @@ function buildError(message, status = 400) {
 const MAX_REQUEST_BYTES = 64 * 1024;
 const MAX_IMAGES = 8;
 const MAX_LINKS = 5;
+const MIN_PRICE_TOMAN = 1000;
+const MAX_PRICE_TOMAN = 1000000000;
 
 class RequestError extends Error {
     constructor(message, status = 400) { super(message); this.status = status; }
@@ -72,15 +74,47 @@ function normalizeImages(images) {
 
 function normalizeLinks(value) {
     const links = Array.isArray(value) ? value : String(value || "").split(/\r?\n/);
-    const result = links.map((link) => String(link || "").trim()).filter(Boolean);
+    const result = links.map((link, index) => {
+        if (typeof link === "string") {
+            const url = link.trim();
+            return url ? { title: `خرید از فروشگاه ${index + 1}`, url } : null;
+        }
+        if (!link || typeof link !== "object" || Array.isArray(link)) throw new RequestError("اطلاعات لینک فروشگاه معتبر نیست.");
+        return {
+            title: boundedText(link.title, "عنوان لینک فروشگاه", 80),
+            url: String(link.url || "").trim(),
+        };
+    }).filter((link) => {
+        if (!link) return false;
+        if (!link.title && !link.url) return false;
+        if (!link.title || !link.url) throw new RequestError("برای هر لینک فروشگاه، هم عنوان و هم نشانی را وارد کنید.");
+        return true;
+    });
     if (result.length > MAX_LINKS) throw new RequestError(`حداکثر ${MAX_LINKS} لینک فروشگاه مجاز است.`);
     return result.map((link) => {
-        if (link.length > 2048) throw new RequestError("لینک فروشگاه بیش از حد طولانی است.");
+        if (!link.title) throw new RequestError("عنوان هر لینک فروشگاه را وارد کنید.");
+        if (link.url.length > 2048) throw new RequestError("لینک فروشگاه بیش از حد طولانی است.");
         let url;
-        try { url = new URL(link); } catch { throw new RequestError("یکی از لینک‌های فروشگاه معتبر نیست."); }
+        try { url = new URL(link.url); } catch { throw new RequestError("یکی از لینک‌های فروشگاه معتبر نیست."); }
         if (url.protocol !== "https:") throw new RequestError("لینک فروشگاه باید با HTTPS باشد.");
-        return url.toString();
+        return { title: link.title, url: url.toString() };
     });
+}
+
+function normalizePrice(value, field) {
+    if (value === null || value === undefined || value === "") return null;
+    if (!Number.isSafeInteger(value) || value < MIN_PRICE_TOMAN || value > MAX_PRICE_TOMAN) {
+        throw new RequestError(`${field} باید بین ۱٬۰۰۰ تا ۱٬۰۰۰٬۰۰۰٬۰۰۰ تومان باشد.`);
+    }
+    return value;
+}
+
+async function validateCategorySelection(store, category, existingCategory = "") {
+    if (!category || category === existingCategory) return;
+    const saved = await store.get("categories", "json");
+    if (saved !== null && (!Array.isArray(saved) || !saved.includes(category))) {
+        throw new RequestError("این دسته‌بندی در فهرست اطلاعات پایه وجود ندارد.");
+    }
 }
 
 function boundedText(value, field, limit) {
@@ -146,7 +180,12 @@ async function loadItems(context, store) {
 
             return {
                 ...item,
-                images: Array.isArray(images) ? images.filter(Boolean) : []
+                images: Array.isArray(images) ? images.filter(Boolean) : [],
+                storeLinks: Array.isArray(item.storeLinks) ? item.storeLinks.map((link, index) => (
+                    typeof link === "string"
+                        ? { title: `خرید از فروشگاه ${index + 1}`, url: link }
+                        : link
+                )) : [],
             };
         });
     }
@@ -168,7 +207,11 @@ function validateItemInput(body, existingId = null) {
     const description = boundedText(body.description, "توضیحات", 2000);
     const slug = boundedText(body.slug, "اسلاگ", 120);
     const images = normalizeImages(body.images);
-    const priceRange = boundedText(body.priceRange, "بازه قیمت", 100);
+    const priceRange = boundedText(body.priceRange, "بازه قیمت قدیمی", 100);
+    const priceMin = normalizePrice(body.priceMin, "حداقل قیمت");
+    const priceMax = normalizePrice(body.priceMax, "حداکثر قیمت");
+    if ((priceMin === null) !== (priceMax === null)) throw new RequestError("هر دو حداقل و حداکثر قیمت را وارد کنید.");
+    if (priceMin !== null && priceMin > priceMax) throw new RequestError("حداقل قیمت نمی‌تواند از حداکثر قیمت بیشتر باشد.");
     const category = boundedText(body.category, "دسته‌بندی/اولویت", 60);
     const storeLinks = normalizeLinks(body.storeLinks);
 
@@ -182,6 +225,8 @@ function validateItemInput(body, existingId = null) {
         title,
         description,
         images,
+        priceMin,
+        priceMax,
         priceRange,
         category,
         storeLinks,
@@ -235,6 +280,7 @@ export async function onRequest(context) {
             const nextId = items.reduce((max, item) => Math.max(max, Number(item.id) || 0), 0) + 1;
 
             const item = validateItemInput({ ...body, id: nextId }, nextId);
+            await validateCategorySelection(store, item.category);
             const updatedItems = await saveItems(store, [...items, item]);
 
             return Response.json({ success: true, item, items: updatedItems });
@@ -259,6 +305,7 @@ export async function onRequest(context) {
 
             const currentItem = items[index];
             const item = validateItemInput({ ...currentItem, ...body, id: itemId }, itemId);
+            await validateCategorySelection(store, item.category, currentItem.category || "");
 
             items[index] = item;
             const updatedItems = await saveItems(store, items);

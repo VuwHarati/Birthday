@@ -29,13 +29,49 @@
                 رزرو کنی. اگر یک هدیه رزرو شده باشه، برای بقیه هم به همون صورت نمایش داده می‌شه.
             </p>
 
-            <div class="hero-search">
-                <label class="sr-only" for="search-input">جستجو در هدایا</label>
-                <input id="search-input"
-                       type="text"
-                       placeholder="جستجو در هدایا"
-                       autocomplete="off" />
+            <div class="catalog-search-panel">
+                <div class="hero-search">
+                    <label class="sr-only" for="search-input">جستجو بر اساس نام هدیه</label>
+                    <input id="search-input"
+                           type="search"
+                           placeholder="جستجو بر اساس نام هدیه"
+                           autocomplete="off" />
+                </div>
+                <div class="catalog-filters">
+                    <label class="filter-control">
+                        <span>دسته‌بندی</span>
+                        <select id="category-filter">
+                            <option value="">همه دسته‌ها</option>
+                        </select>
+                    </label>
+                    <div class="filter-control filter-price-control">
+                        <span>محدوده قیمت</span>
+                        <div class="filter-price-inputs">
+                            <label class="amount-control">
+                                <span class="sr-only">از قیمت (تومان)</span>
+                                <input id="price-filter-min" type="text" inputmode="numeric" autocomplete="off" placeholder="از" />
+                                <span>تومان</span>
+                            </label>
+                            <label class="amount-control">
+                                <span class="sr-only">تا قیمت (تومان)</span>
+                                <input id="price-filter-max" type="text" inputmode="numeric" autocomplete="off" placeholder="تا" />
+                                <span>تومان</span>
+                            </label>
+                        </div>
+                    </div>
+                    <label class="filter-control">
+                        <span>وضعیت رزرو</span>
+                        <select id="reservation-filter">
+                            <option value="all">همه</option>
+                            <option value="reserved">رزرو شده</option>
+                            <option value="available">آزاد</option>
+                        </select>
+                    </label>
+                    <button id="clear-filters-btn" class="clear-filters-btn" type="button">پاک کردن فیلترها</button>
+                </div>
+                <p id="filter-message" class="filter-message" role="status" hidden></p>
             </div>
+            <a class="admin-entry-link" href="/admin">ورود به پنل ادمین</a>
         </div>
     </header>
 
@@ -51,6 +87,8 @@
                     روی هر کارت می‌تونی عکس‌ها رو ورق بزنی و در صورت آزاد بودن، هدیه رو رزرو کنی.
                 </p>
             </div>
+
+            <p id="items-count" class="catalog-results-count" aria-live="polite"></p>
 
             <div id="items-container" class="gifts-grid">
                 <div class="loading-state">

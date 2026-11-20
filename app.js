@@ -4,6 +4,12 @@ const API_BASE = "/api";
 // عناصر DOM
 const itemsContainer = document.getElementById("items-container");
 const searchInput = document.getElementById("search-input");
+const categoryFilter = document.getElementById("category-filter");
+const priceFilterMin = document.getElementById("price-filter-min");
+const priceFilterMax = document.getElementById("price-filter-max");
+const reservationFilter = document.getElementById("reservation-filter");
+const filterMessage = document.getElementById("filter-message");
+const itemsCount = document.getElementById("items-count");
 const reserveDialog = document.getElementById("reserve-dialog");
 const reserveForm = document.getElementById("reserve-form");
 const reserveCancel = document.getElementById("reserve-cancel");
@@ -20,6 +26,52 @@ function escapeHtml(value) {
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
+}
+
+function normalizeSearchText(value) {
+    return String(value || "").toLocaleLowerCase().replace(/[يى]/g, "ی").replace(/ك/g, "ک").trim();
+}
+
+function parseFilterAmount(value) {
+    const normalized = String(value).replace(/[۰-۹٠-٩]/g, (digit) => {
+        const code = digit.charCodeAt(0);
+        return String(code >= 0x06f0 ? code - 0x06f0 : code - 0x0660);
+    }).replace(/[\s,٬،]/g, "");
+    if (!normalized) return null;
+    return /^\d+$/.test(normalized) ? Number(normalized) : Number.NaN;
+}
+
+function formatGroupedInput(input) {
+    const oldValue = input.value;
+    const caret = input.selectionStart ?? oldValue.length;
+    const before = (oldValue.slice(0, caret).match(/[۰-۹٠-٩0-9]/g) || []).length;
+    const digits = oldValue.replace(/[۰-۹٠-٩]/g, (digit) => {
+        const code = digit.charCodeAt(0);
+        return String(code >= 0x06f0 ? code - 0x06f0 : code - 0x0660);
+    }).replace(/[\s,٬،]/g, "");
+    if (!digits) return;
+    if (!/^\d+$/.test(digits)) return;
+    const formatted = new Intl.NumberFormat("fa-IR").format(Number(digits));
+    input.value = formatted;
+    let position = 0;
+    let count = 0;
+    if (before > 0) {
+        for (const char of formatted) {
+            position += char.length;
+            if (/[۰-۹٠-٩0-9]/.test(char)) count += 1;
+            if (count >= before) break;
+        }
+    }
+    input.setSelectionRange(position, position);
+}
+
+function populateCategoryFilter() {
+    const selected = categoryFilter.value;
+    const names = [...new Set(allItems.map((item) => String(item.category || "").trim()).filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b, "fa"));
+    categoryFilter.replaceChildren(new Option("همه دسته‌ها", ""));
+    names.forEach((name) => categoryFilter.add(new Option(name, name)));
+    categoryFilter.value = names.includes(selected) ? selected : "";
 }
 
 // --- Data fetching ---
@@ -129,9 +181,14 @@ function createSlider(images, itemId) {
 function createCard(item) {
     const reservation = reservationsMap[String(item.id)];
     const isReserved = Boolean(reservation && reservation.reserved);
-    const storeLinks = Array.isArray(item.storeLinks) ? item.storeLinks.filter((link) => {
-        try { return new URL(link).protocol === "https:"; } catch { return false; }
+    const storeLinks = Array.isArray(item.storeLinks) ? item.storeLinks.map((link, index) => (
+        typeof link === "string" ? { title: `خرید از فروشگاه ${index + 1}`, url: link } : link
+    )).filter((link) => {
+        try { return new URL(link.url).protocol === "https:"; } catch { return false; }
     }) : [];
+    const priceText = Number.isSafeInteger(item.priceMin) && Number.isSafeInteger(item.priceMax)
+        ? `${new Intl.NumberFormat("fa-IR").format(item.priceMin)} تا ${new Intl.NumberFormat("fa-IR").format(item.priceMax)} تومان`
+        : item.priceRange || "";
 
     return `
     <article class="gift-card" data-id="${item.id}">
@@ -148,11 +205,11 @@ function createCard(item) {
 
         <p class="card-description">${escapeHtml(item.description || "")}</p>
 
-        ${item.priceRange || item.category ? `<div class="gift-meta">
-          ${item.priceRange ? `<span>بازه قیمت: ${escapeHtml(item.priceRange)}</span>` : ""}
+        ${priceText || item.category ? `<div class="gift-meta">
+          ${priceText ? `<span>بازه قیمت: ${escapeHtml(priceText)}</span>` : ""}
           ${item.category ? `<span>${escapeHtml(item.category)}</span>` : ""}
         </div>` : ""}
-        ${storeLinks.length ? `<div class="gift-store-links">${storeLinks.map((link, index) => `<a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">خرید از فروشگاه ${index + 1}</a>`).join("")}</div>` : ""}
+        ${storeLinks.length ? `<div class="gift-store-links">${storeLinks.map((link) => `<a href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(link.title)}</a>`).join("")}</div>` : ""}
 
         <div class="card-actions">
           ${isReserved
@@ -224,20 +281,53 @@ async function handleReserveClick(itemId) {
 }
 
 function filterItems() {
-    const query = searchInput.value.trim().toLowerCase();
+    const query = normalizeSearchText(searchInput.value);
+    const selectedCategory = categoryFilter.value;
+    const selectedStatus = reservationFilter.value;
+    const minPrice = parseFilterAmount(priceFilterMin.value);
+    const maxPrice = parseFilterAmount(priceFilterMax.value);
+    let error = "";
+
+    if (Number.isNaN(minPrice) || Number.isNaN(maxPrice)) error = "محدوده قیمت را فقط با عدد وارد کن.";
+    else if ((minPrice !== null && (minPrice < 1000 || minPrice > 1000000000))
+        || (maxPrice !== null && (maxPrice < 1000 || maxPrice > 1000000000))) {
+        error = "قیمت جست‌وجو باید بین ۱٬۰۰۰ تا ۱٬۰۰۰٬۰۰۰٬۰۰۰ تومان باشد.";
+    } else if (minPrice !== null && maxPrice !== null && minPrice > maxPrice) {
+        error = "مقدار «از» نمی‌تواند از مقدار «تا» بیشتر باشد.";
+    }
+    filterMessage.textContent = error;
+    filterMessage.hidden = !error;
+
+    if (error) {
+        itemsCount.textContent = `۰ از ${allItems.length} هدیه`;
+        renderItems([]);
+        return;
+    }
 
     const filtered = allItems.filter((item) => {
-        const title = String(item.title || "").toLowerCase();
-        const description = String(item.description || "").toLowerCase();
+        const title = normalizeSearchText(item.title);
+        if (query && !title.includes(query)) return false;
+        if (selectedCategory && item.category !== selectedCategory) return false;
 
-        return title.includes(query) || description.includes(query);
+        const isReserved = Boolean(reservationsMap[String(item.id)]?.reserved);
+        if (selectedStatus === "reserved" && !isReserved) return false;
+        if (selectedStatus === "available" && isReserved) return false;
+
+        if (minPrice !== null || maxPrice !== null) {
+            if (!Number.isSafeInteger(item.priceMin) || !Number.isSafeInteger(item.priceMax)) return false;
+            if (minPrice !== null && item.priceMax < minPrice) return false;
+            if (maxPrice !== null && item.priceMin > maxPrice) return false;
+        }
+        return true;
     });
 
+    itemsCount.textContent = `${new Intl.NumberFormat("fa-IR").format(filtered.length)} از ${new Intl.NumberFormat("fa-IR").format(allItems.length)} هدیه`;
     renderItems(filtered);
 }
 
 async function refreshItems() {
     allItems = await fetchItems();
+    populateCategoryFilter();
    
     try {
         reservationsMap = await fetchReservations();
@@ -341,6 +431,31 @@ async function init() {
     try {
         await refreshItems();
         searchInput.addEventListener("input", filterItems);
+        categoryFilter.addEventListener("change", filterItems);
+        reservationFilter.addEventListener("change", filterItems);
+        for (const input of [priceFilterMin, priceFilterMax]) {
+            input.addEventListener("input", () => {
+                formatGroupedInput(input);
+                filterItems();
+            });
+            input.addEventListener("blur", () => {
+                const value = parseFilterAmount(input.value);
+                if (Number.isSafeInteger(value)) input.value = new Intl.NumberFormat("fa-IR").format(value);
+            });
+            input.addEventListener("focus", () => {
+                const value = parseFilterAmount(input.value);
+                if (Number.isSafeInteger(value)) input.value = String(value);
+            });
+        }
+        document.getElementById("clear-filters-btn").addEventListener("click", () => {
+            searchInput.value = "";
+            categoryFilter.value = "";
+            reservationFilter.value = "all";
+            priceFilterMin.value = "";
+            priceFilterMax.value = "";
+            filterItems();
+        });
+        filterItems();
     } catch (error) {
         console.error(error);
         itemsContainer.innerHTML = `
